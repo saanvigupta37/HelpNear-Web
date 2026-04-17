@@ -67,6 +67,7 @@ function Card3D({ icon, title, desc, delay = 0 }) {
       }}
       className="animate-fade-in"
     >
+      {/* Icon box */}
       <div style={{
         width: 56, height: 56, borderRadius: 16,
         background: 'rgba(52,199,89,0.1)',
@@ -107,21 +108,21 @@ function Ticker() {
 
 const features = [
   {
-    icon: '🛡️',
+    icon: '⚡',
     title: 'Safe & Secure',
     desc: 'In-app chat, verified community members, and safety guidelines ensure you help with confidence.',
     delay: 0,
   },
   {
-    icon: '🤝',
-    title: 'Mutual Aid',
-    desc: 'Request help for anything from groceries to quick fixes. Your neighbours are ready to step in.',
+    icon: '📍',
+    title: 'Hyperlocal',
+    desc: 'Connect only with real people in your immediate area. No strangers, just neighbours.',
     delay: 100,
   },
   {
-    icon: '✅',
-    title: 'Verified Community',
-    desc: 'Every helper is verified through our trust system to ensure a safe environment for everyone.',
+    icon: '💚',
+    title: 'Human First',
+    desc: 'Real connections, real kindness. Build community one small act of help at a time.',
     delay: 200,
   },
 ]
@@ -135,7 +136,7 @@ export default function Landing() {
   }, [])
 
   return (
-    <div style={{ minHeight: '100vh', background: '#030303', fontFamily: 'Syne, sans-serif', overflowX: 'hidden', color: '#fff' }}>
+    <div style={{ minHeight: '100vh', background: '#030303', fontFamily: "'Plus Jakarta Sans', sans-serif", overflowX: 'hidden', color: '#fff' }}>
       <CursorOrb />
 
       {/* Noise grain overlay */}
@@ -200,11 +201,11 @@ export default function Landing() {
           <span style={{ color: '#34C759', fontSize: '0.82rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Live in your neighbourhood</span>
         </div>
 
-        {/* Headline - UPDATED */}
+        {/* Headline */}
         <h1 className="animate-slide-up" style={{
           fontSize: 'clamp(3rem, 9vw, 6.5rem)',
           fontWeight: 900,
-          lineHeight: 1.1,
+          lineHeight: 1.0,
           letterSpacing: '-0.04em',
           marginBottom: 32,
         }}>
@@ -218,7 +219,7 @@ export default function Landing() {
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
             animation: 'shimmer 3s linear infinite',
-          }}>Human. ✦</span>
+          }}>Human.</span>
         </h1>
 
         {/* Subtext */}
@@ -286,7 +287,7 @@ export default function Landing() {
         <Ticker />
       </main>
 
-      {/* Feature cards - UPDATED with Safe & Secure */}
+      {/* Feature cards */}
       <section style={{ position: 'relative', zIndex: 2, maxWidth: 1000, margin: '80px auto 0', padding: '0 24px' }}>
         <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 40 }}>
           what you get
@@ -307,8 +308,14 @@ export default function Landing() {
           borderRadius: 32, padding: '60px 40px', textAlign: 'center',
           position: 'relative', overflow: 'hidden',
         }}>
-          <div style={{ position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(52,199,89,0.15) 0%, transparent 70%)' }} />
-          <div style={{ position: 'absolute', bottom: -40, left: -40, width: 160, height: 160, borderRadius: '50%', background: 'radial-gradient(circle, rgba(10,132,255,0.15) 0%, transparent 70%)' }} />
+          <div style={{
+            position: 'absolute', top: -60, right: -60, width: 200, height: 200, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(52,199,89,0.15) 0%, transparent 70%)',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: -40, left: -40, width: 160, height: 160, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(10,132,255,0.15) 0%, transparent 70%)',
+          }} />
           <p style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#34C759', marginBottom: 16 }}>no cap, fr fr 🔥</p>
           <h2 style={{ fontSize: 'clamp(1.8rem, 4vw, 2.8rem)', fontWeight: 900, letterSpacing: '-0.03em', marginBottom: 16, lineHeight: 1.1 }}>
             Your community is<br />already waiting for you.
@@ -323,7 +330,7 @@ export default function Landing() {
             padding: '16px 40px', borderRadius: 999, textDecoration: 'none',
             boxShadow: '0 0 40px rgba(52,199,89,0.4)',
           }}>
-            Join for free ✦
+            Join for free
           </Link>
         </div>
       </section>

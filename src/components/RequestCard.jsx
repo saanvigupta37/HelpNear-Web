@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 
 const URGENCY_CONFIG = {
-  high:   { label: 'Urgent',       dot: 'bg-red-500 animate-pulse-soft',    badge: 'bg-red-500/15 text-red-400 border-red-500/30',   icon: '🔴' },
-  medium: { label: 'Normal',       dot: 'bg-yellow-400',                    badge: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30', icon: '🟡' },
-  low:    { label: 'Low priority', dot: 'bg-green-500',                     badge: 'bg-green-500/15 text-green-400 border-green-500/30', icon: '🟢' },
+  high:   { label: 'Urgent',       dot: 'bg-red-500 animate-pulse-soft',    badge: 'bg-red-500/15 text-red-400 border-red-500/30' },
+  medium: { label: 'Normal',       dot: 'bg-yellow-400',                    badge: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30' },
+  low:    { label: 'Low priority', dot: 'bg-green-500',                     badge: 'bg-green-500/15 text-green-400 border-green-500/30' },
 }
 
 const STATUS_CONFIG = {
@@ -13,19 +13,21 @@ const STATUS_CONFIG = {
   cancelled: { label: 'Cancelled', cls: 'bg-gray-700/50 text-gray-500' },
 }
 
-function Avatar({ profile, size = 9 }) {
+function Avatar({ profile, size = 36, onClick }) {
   const [err, setErr] = useState(false)
-  const px = { 8: 32, 9: 36, 10: 40, 11: 44, 12: 48 }[size] || 36
+  const cls = `rounded-full flex-shrink-0 ${onClick ? 'cursor-pointer hover:opacity-75 hover:scale-105 transition-all' : ''}`
+
   if (profile?.avatar_url && !err) {
     return (
-      <img src={profile.avatar_url} alt={profile.full_name} onError={() => setErr(true)}
-        style={{ width: px, height: px }}
-        className="rounded-full object-cover flex-shrink-0 border-2 border-white/10" />
+      <img src={profile.avatar_url} alt="" onError={() => setErr(true)}
+        onClick={onClick} style={{ width: size, height: size }}
+        className={`${cls} object-cover border-2 border-white/10`} />
     )
   }
   return (
-    <div style={{ width: px, height: px }}
-      className="rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold flex-shrink-0 text-sm">
+    <div onClick={onClick}
+      className={`${cls} bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold`}
+      style={{ width: size, height: size, fontSize: Math.floor(size * 0.4) }}>
       {profile?.full_name?.[0]?.toUpperCase() || '?'}
     </div>
   )
@@ -61,7 +63,7 @@ function ExpiryTimer({ expiresAt, status }) {
 export default function RequestCard({
   request, isHelper, isOwn,
   onAccept, onBackOut, onComplete, onCancel,
-  onOpenDetails, onOpenChat,
+  onOpenDetails, onOpenChat, onViewProfile,
   accepting, completing, cancelling,
 }) {
   const requester = request.requester_profile || request.profiles
@@ -73,7 +75,7 @@ export default function RequestCard({
       className="glass-card rounded-2xl p-4 card-lift cursor-pointer group relative overflow-hidden"
       onClick={() => onOpenDetails?.(request)}
     >
-      {/* Subtle top accent line */}
+      {/* Top accent line */}
       <div className={`absolute top-0 left-0 right-0 h-px ${
         request.urgency === 'high' ? 'bg-gradient-to-r from-transparent via-red-500/50 to-transparent' :
         request.urgency === 'medium' ? 'bg-gradient-to-r from-transparent via-yellow-500/40 to-transparent' :
@@ -83,12 +85,19 @@ export default function RequestCard({
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <Avatar profile={requester} size={9} />
+          {/* Clickable avatar */}
+          <div onClick={e => { e.stopPropagation(); onViewProfile?.(requester?.id) }}>
+            <Avatar profile={requester} size={36} onClick={onViewProfile ? () => {} : undefined} />
+          </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <p className="font-semibold text-white text-sm leading-tight truncate">
+              {/* Clickable name */}
+              <button
+                onClick={e => { e.stopPropagation(); onViewProfile?.(requester?.id) }}
+                className="font-semibold text-white text-sm leading-tight hover:text-green-400 transition-colors truncate max-w-[120px]"
+              >
                 {requester?.full_name || 'Unknown'}
-              </p>
+              </button>
               {requester?.helps_completed > 5 && (
                 <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 flex-shrink-0">
                   ⭐ Trusted
@@ -108,15 +117,12 @@ export default function RequestCard({
         </div>
       </div>
 
-      {/* Help type */}
       <h3 className="font-bold text-white text-base mb-1.5">{request.help_type}</h3>
 
-      {/* Description */}
       {request.description && (
         <p className="text-gray-400 text-sm mb-2 leading-relaxed line-clamp-2">{request.description}</p>
       )}
 
-      {/* Reason */}
       {request.reason && (
         <div className="bg-white/[0.03] rounded-xl px-3 py-2 mb-2 border border-white/[0.06]">
           <p className="text-gray-400 text-xs">
@@ -126,7 +132,6 @@ export default function RequestCard({
         </div>
       )}
 
-      {/* Status + Expiry row */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         {isOwn && request.status && (
           <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${STATUS_CONFIG[request.status]?.cls || ''}`}>
@@ -136,7 +141,6 @@ export default function RequestCard({
         <ExpiryTimer expiresAt={request.expires_at} status={request.status} />
       </div>
 
-      {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-white/[0.06]" onClick={e => e.stopPropagation()}>
         <span className="text-gray-500 text-xs font-mono">🤝 {requester?.helps_completed || 0} helps</span>
 
@@ -147,35 +151,33 @@ export default function RequestCard({
               disabled={cancelling}
               className="text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 bg-red-500/5 hover:bg-red-500/10 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95 disabled:opacity-50"
             >
-              {cancelling ? <span className="flex items-center gap-1"><div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />...</span> : '✕ Cancel'}
+              {cancelling
+                ? <span className="flex items-center gap-1"><div className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />...</span>
+                : '✕ Cancel'}
             </button>
           )}
 
           {isHelper ? (
             <>
-              <button
-                onClick={e => { e.stopPropagation(); onOpenChat?.(request) }}
-                className="text-blue-400 border border-blue-500/20 hover:bg-blue-500/10 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95"
-              >💬 Chat</button>
-              <button
-                onClick={e => { e.stopPropagation(); onBackOut?.(request) }}
+              <button onClick={e => { e.stopPropagation(); onOpenChat?.(request) }}
+                className="text-blue-400 border border-blue-500/20 hover:bg-blue-500/10 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95">
+                💬 Chat
+              </button>
+              <button onClick={e => { e.stopPropagation(); onBackOut?.(request) }}
                 disabled={completing}
-                className="text-gray-400 hover:text-red-400 border border-white/[0.08] hover:border-red-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95 disabled:opacity-50"
-              >Back Out</button>
-              <button
-                onClick={e => { e.stopPropagation(); onComplete?.(request) }}
+                className="text-gray-400 hover:text-red-400 border border-white/[0.08] hover:border-red-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all active:scale-95 disabled:opacity-50">
+                Back Out
+              </button>
+              <button onClick={e => { e.stopPropagation(); onComplete?.(request) }}
                 disabled={completing}
-                className="bg-green-500 hover:bg-green-400 text-black font-bold px-3 py-1.5 rounded-lg text-xs transition-all hover:scale-105 active:scale-95 disabled:opacity-50 flex items-center gap-1"
-              >
+                className="bg-green-500 hover:bg-green-400 text-black font-bold px-3 py-1.5 rounded-lg text-xs transition-all hover:scale-105 active:scale-95 disabled:opacity-50 flex items-center gap-1">
                 {completing ? <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin" /> : '✓'} Done
               </button>
             </>
           ) : !isOwn && (
-            <button
-              onClick={e => { e.stopPropagation(); onAccept?.(request) }}
+            <button onClick={e => { e.stopPropagation(); onAccept?.(request) }}
               disabled={accepting || isExpired}
-              className="bg-green-500 hover:bg-green-400 disabled:opacity-50 text-black font-bold px-4 py-1.5 rounded-lg text-sm transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 glow-green"
-            >
+              className="bg-green-500 hover:bg-green-400 disabled:opacity-50 text-black font-bold px-4 py-1.5 rounded-lg text-sm transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 glow-green">
               {accepting ? <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin" /> : null}
               {isExpired ? 'Expired' : 'Accept'}
             </button>

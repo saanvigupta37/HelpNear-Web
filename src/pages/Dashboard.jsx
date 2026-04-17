@@ -5,6 +5,7 @@ import Sidebar from '../components/Sidebar'
 import RequestCard from '../components/RequestCard'
 import EmptyState from '../components/EmptyState'
 import RequestDetailsModal from '../components/RequestDetailsModal'
+import UserProfileModal from '../components/UserProfileModal'
 
 const PRESET_TYPES = [
   { icon: '🛒', label: 'Buy groceries' },
@@ -16,31 +17,36 @@ const PRESET_TYPES = [
 const DURATIONS = ['5 min', '10 min', '15 min', '20 min', '30 min', '1 hour']
 const URGENCIES = ['low', 'medium', 'high']
 
-/* ── Level system ── */
 function getLevel(helps) {
   if (helps >= 20) return { label: '🌟 Community Hero', next: null,  progress: 100, color: 'text-purple-400' }
-  if (helps >= 5)  return { label: '🤝 Trusted Helper', next: 20,  progress: ((helps - 5) / 15) * 100, color: 'text-blue-400' }
-  return              { label: '🌱 New Helper',      next: 5,   progress: (helps / 5) * 100,  color: 'text-green-400' }
+  if (helps >= 5)  return { label: '🤝 Trusted Helper', next: 20,   progress: ((helps - 5) / 15) * 100, color: 'text-blue-400' }
+  return               { label: '🌱 New Helper',       next: 5,    progress: (helps / 5) * 100, color: 'text-green-400' }
 }
 
 /* ── Avatar ── */
-function Avatar({ profile, size = 36, className = '' }) {
+function Avatar({ profile, size = 36, className = '', onClick }) {
   const [err, setErr] = useState(false)
+  const Tag = onClick ? 'button' : 'div'
   if (profile?.avatar_url && !err) {
-    return <img src={profile.avatar_url} alt="" onError={() => setErr(true)}
-      style={{ width: size, height: size }}
-      className={`rounded-full object-cover border-2 border-white/10 flex-shrink-0 ${className}`} />
+    return (
+      <Tag onClick={onClick}
+        style={{ width: size, height: size }}
+        className={`rounded-full object-cover border-2 border-white/10 flex-shrink-0 overflow-hidden ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''} ${className}`}>
+        <img src={profile.avatar_url} alt="" onError={() => setErr(true)}
+          style={{ width: size, height: size }} className="object-cover w-full h-full" />
+      </Tag>
+    )
   }
   return (
-    <div
-      className={`rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold flex-shrink-0 ${className}`}
+    <Tag onClick={onClick}
+      className={`rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white font-bold flex-shrink-0 ${onClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''} ${className}`}
       style={{ width: size, height: size, fontSize: Math.floor(size * 0.4) }}>
       {profile?.full_name?.[0]?.toUpperCase() || '?'}
-    </div>
+    </Tag>
   )
 }
 
-/* ── Skeleton loader ── */
+/* ── Skeleton ── */
 function CardSkeleton() {
   return (
     <div className="glass-card rounded-2xl p-4">
@@ -65,33 +71,29 @@ function CardSkeleton() {
 
 /* ── Celebration Modal ── */
 function CelebrationModal({ onClose, helpsCount }) {
-  const colors = ['#34C759','#0A84FF','#FFD60A','#AF52DE','#FF6B35','#30D158']
+  const colors = ['34C759','0A84FF','FFD60A','AF52DE','FF6B35','30D158']
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4 animate-fade-in">
       <div className="relative glass-card rounded-3xl p-8 text-center max-w-sm w-full border border-green-500/20 animate-celebrate overflow-hidden">
-        {/* Glow */}
         <div className="absolute inset-0 bg-gradient-to-b from-green-500/5 to-transparent pointer-events-none" />
-        {/* Confetti */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {Array.from({length:24}).map((_,i) => (
             <div key={i} className="confetti-piece rounded-sm absolute" style={{
-              left: `${Math.random()*100}%`, top: '-12px',
-              backgroundColor: colors[i%colors.length],
-              animationDelay: `${Math.random()*0.6}s`,
-              animationDuration: `${1.2+Math.random()*0.8}s`,
-              width: `${5+Math.random()*8}px`, height: `${5+Math.random()*8}px`,
-              transform: `rotate(${Math.random()*360}deg)`,
+              left:`${Math.random()*100}%`, top:'-12px',
+              backgroundColor:`#${colors[i%colors.length]}`,
+              animationDelay:`${Math.random()*0.6}s`,
+              animationDuration:`${1.2+Math.random()*0.8}s`,
+              width:`${5+Math.random()*8}px`, height:`${5+Math.random()*8}px`,
             }} />
           ))}
         </div>
-
         <div className="relative z-10">
           <div className="text-6xl mb-4 animate-float">🎉</div>
           <h2 className="text-2xl font-extrabold text-white mb-2">You're a hero!</h2>
           <p className="text-gray-400 mb-1">Task completed successfully.</p>
-          <p className="text-green-400 font-bold text-lg mb-1">{helpsCount} helps total now!</p>
+          <p className="text-green-400 font-bold text-lg mb-1">{helpsCount} helps total!</p>
           {helpsCount === 5  && <p className="text-blue-400 text-sm mb-3">🏆 You unlocked <strong>Trusted Helper</strong>!</p>}
-          {helpsCount === 20 && <p className="text-purple-400 text-sm mb-3">🌟 You're now a <strong>Community Hero</strong>!</p>}
+          {helpsCount === 20 && <p className="text-purple-400 text-sm mb-3">🌟 You're a <strong>Community Hero</strong>!</p>}
           <button onClick={onClose}
             className="w-full bg-green-500 hover:bg-green-400 text-black font-bold py-3.5 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] glow-green mt-2">
             Keep Helping 💚
@@ -102,8 +104,24 @@ function CelebrationModal({ onClose, helpsCount }) {
   )
 }
 
-/* ── Chat Modal – uses BROADCAST for reliable cross-user realtime ── */
-function ChatModal({ request, currentUserId, currentProfile, onClose }) {
+/* ═══════════════════════════════════════════════════════
+   CHAT MODAL
+   Dual-channel strategy for guaranteed bidirectional delivery:
+
+   A) Supabase BROADCAST — instant cross-user delivery
+      • fires for both users the moment sender broadcasts
+      • does NOT depend on RLS or replica identity
+      • used for real-time UI updates
+
+   B) DB insert — persists message for history
+      • both users load history on open
+      • even if Broadcast misses an event, polling on focus
+        re-syncs state
+
+   Result: sender sees message instantly (optimistic),
+   receiver sees it via Broadcast within milliseconds.
+═══════════════════════════════════════════════════════ */
+function ChatModal({ request, currentUserId, onClose, onViewProfile }) {
   const [messages, setMessages] = useState([])
   const [newMsg, setNewMsg] = useState('')
   const [sending, setSending] = useState(false)
@@ -111,43 +129,51 @@ function ChatModal({ request, currentUserId, currentProfile, onClose }) {
   const endRef = useRef(null)
   const channelRef = useRef(null)
 
-  useEffect(() => {
-    // 1. Fetch existing messages from DB
-    const loadMsgs = async () => {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('request_id', request.id)
-        .order('created_at', { ascending: true })
-      if (error) console.error('load msgs error:', error)
-      if (data) setMessages(data)
-      setLoading(false)
-    }
-    loadMsgs()
+  const loadHistory = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('request_id', request.id)
+      .order('created_at', { ascending: true })
+    if (error) console.error('chat load error:', error.message)
+    if (data) setMessages(data)
+    setLoading(false)
+  }, [request.id])
 
-    // 2. Subscribe to NEW messages via postgres_changes (DB-level, works across users)
-    const channel = supabase
-      .channel(`room:${request.id}`, { config: { broadcast: { self: false } } })
-      // DB listener for messages inserted by OTHER users
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `request_id=eq.${request.id}`,
-      }, (payload) => {
+  useEffect(() => {
+    let isMounted = true
+    loadHistory()
+
+    // Broadcast channel — works cross-user without RLS dependency
+    const channelName = `chat:${request.id}`
+    const channel = supabase.channel(channelName, {
+      config: { broadcast: { self: false } }, // don't echo back to sender
+    })
+
+    channel
+      .on('broadcast', { event: 'new_message' }, ({ payload }) => {
+        if (!isMounted) return
         setMessages(prev => {
-          // Avoid duplicate if we already added it optimistically
-          if (prev.some(m => m.id === payload.new.id)) return prev
-          return [...prev, payload.new]
+          if (prev.some(m => m.id === payload.id)) return prev
+          return [...prev, payload]
         })
       })
-      .subscribe()
+      .subscribe((status) => {
+        console.log(`Chat channel [${channelName}]:`, status)
+      })
 
     channelRef.current = channel
+
+    // Re-sync on window focus (catches any missed events)
+    const onFocus = () => { if (isMounted) loadHistory() }
+    window.addEventListener('focus', onFocus)
+
     return () => {
+      isMounted = false
+      window.removeEventListener('focus', onFocus)
       supabase.removeChannel(channel)
     }
-  }, [request.id])
+  }, [request.id, loadHistory])
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -159,9 +185,10 @@ function ChatModal({ request, currentUserId, currentProfile, onClose }) {
     setSending(true)
     setNewMsg('')
 
-    // Optimistic insert so sender sees it instantly
+    // 1. Show optimistically for sender immediately
+    const tempId = `opt-${Date.now()}`
     const optimistic = {
-      id: `opt-${Date.now()}`,
+      id: tempId,
       request_id: request.id,
       sender_id: currentUserId,
       content: text,
@@ -169,35 +196,65 @@ function ChatModal({ request, currentUserId, currentProfile, onClose }) {
     }
     setMessages(prev => [...prev, optimistic])
 
-    // Persist to DB (triggers postgres_changes for the other user)
-    const { data, error } = await supabase
+    // 2. Persist to DB
+    const { data: inserted, error } = await supabase
       .from('messages')
       .insert({ request_id: request.id, sender_id: currentUserId, content: text })
       .select()
       .single()
 
     if (error) {
-      console.error('send msg error:', error)
-      // Rollback optimistic
-      setMessages(prev => prev.filter(m => m.id !== optimistic.id))
-    } else if (data) {
-      // Replace optimistic with real record
-      setMessages(prev => prev.map(m => m.id === optimistic.id ? data : m))
+      console.error('send error:', error.message)
+      setMessages(prev => prev.filter(m => m.id !== tempId))
+      setSending(false)
+      return
     }
+
+    // 3. Replace optimistic with real record for sender
+    setMessages(prev => prev.map(m => m.id === tempId ? inserted : m))
+
+    // 4. Broadcast to the OTHER user via Broadcast channel
+    await channelRef.current?.send({
+      type: 'broadcast',
+      event: 'new_message',
+      payload: inserted,
+    })
+
     setSending(false)
   }
+
+  const requesterProfile = request.requester_profile
+  const helperProfile = request.helper_profile
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 px-4 animate-fade-in">
       <div className="glass-card rounded-2xl w-full max-w-md border border-white/10 flex flex-col shadow-2xl animate-slide-up"
-        style={{ height: 540 }}>
+        style={{ height: 560 }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.07]">
-          <div>
-            <h3 className="font-bold text-white">💬 Chat</h3>
-            <p className="text-gray-500 text-xs">{request.help_type}</p>
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-white/[0.07]">
+          {/* Show both party avatars */}
+          <div className="flex -space-x-2">
+            {requesterProfile && (
+              <button onClick={() => onViewProfile(request.requester_id)} className="relative z-10 hover:z-20 transition-all hover:scale-110">
+                <Avatar profile={requesterProfile} size={32} />
+              </button>
+            )}
+            {helperProfile && (
+              <button onClick={() => onViewProfile(request.helper_id)} className="relative hover:z-20 transition-all hover:scale-110">
+                <Avatar profile={helperProfile} size={32} />
+              </button>
+            )}
           </div>
-          <button onClick={onClose} className="text-gray-600 hover:text-white transition-colors w-8 h-8 rounded-lg hover:bg-white/[0.06] flex items-center justify-center text-lg">✕</button>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-white text-sm truncate">{request.help_type}</h3>
+            <p className="text-gray-600 text-xs">
+              {requesterProfile?.full_name} & {helperProfile?.full_name || 'helper'}
+            </p>
+          </div>
+          <button onClick={onClose}
+            className="text-gray-600 hover:text-white transition-colors w-8 h-8 rounded-lg hover:bg-white/[0.06] flex items-center justify-center text-sm flex-shrink-0">
+            ✕
+          </button>
         </div>
 
         {/* Messages */}
@@ -218,11 +275,12 @@ function ChatModal({ request, currentUserId, currentProfile, onClose }) {
           ) : (
             messages.map(msg => {
               const isMe = msg.sender_id === currentUserId
+              const isOptimistic = msg.id?.toString().startsWith('opt-')
               return (
                 <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[76%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
+                  <div className={`max-w-[76%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed transition-opacity ${
                     isMe
-                      ? 'bg-green-500 text-black font-medium rounded-br-sm'
+                      ? `bg-green-500 text-black font-medium rounded-br-sm ${isOptimistic ? 'opacity-70' : 'opacity-100'}`
                       : 'glass text-gray-200 rounded-bl-sm'
                   }`}>
                     {msg.content}
@@ -235,7 +293,7 @@ function ChatModal({ request, currentUserId, currentProfile, onClose }) {
         </div>
 
         {/* Input */}
-        <div className="px-4 py-4 border-t border-white/[0.07] flex gap-3">
+        <div className="px-4 py-3.5 border-t border-white/[0.07] flex gap-3">
           <input
             type="text" value={newMsg}
             onChange={e => setNewMsg(e.target.value)}
@@ -322,44 +380,34 @@ function NewRequestModal({ onClose, onSubmit, submitting }) {
         </div>
         <div className="p-5 space-y-5">
           {error && <div className="bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl px-4 py-3 text-sm">{error}</div>}
-
           <div>
             <p className="text-gray-500 text-xs font-semibold mb-2.5 uppercase tracking-wider">Quick select</p>
             <div className="flex flex-wrap gap-2">
               {PRESET_TYPES.map(({ icon, label }) => (
                 <button key={label} onClick={() => set('helpType', label)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all active:scale-95 ${
-                    form.helpType === label
-                      ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                      : 'glass text-gray-400 hover:text-white border border-white/[0.08]'
-                  }`}>
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all active:scale-95 ${form.helpType === label ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'glass text-gray-400 hover:text-white border border-white/[0.08]'}`}>
                   {icon} {label}
                 </button>
               ))}
             </div>
           </div>
-
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Or type it</label>
             <input type="text" value={form.helpType} onChange={e => set('helpType', e.target.value)}
               placeholder="What do you need help with?"
               className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-green-500/50 text-white placeholder-gray-600 rounded-xl px-4 py-3 outline-none transition-colors text-sm" />
           </div>
-
           <div>
             <p className="text-gray-500 text-xs font-semibold mb-2.5 uppercase tracking-wider">Duration</p>
             <div className="flex flex-wrap gap-2">
               {DURATIONS.map(d => (
                 <button key={d} onClick={() => set('duration', d)}
-                  className={`px-3 py-2 rounded-xl text-sm font-medium transition-all active:scale-95 ${
-                    form.duration === d
-                      ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                      : 'glass text-gray-400 hover:text-white border border-white/[0.08]'
-                  }`}>{d}</button>
+                  className={`px-3 py-2 rounded-xl text-sm font-medium transition-all active:scale-95 ${form.duration === d ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'glass text-gray-400 hover:text-white border border-white/[0.08]'}`}>
+                  {d}
+                </button>
               ))}
             </div>
           </div>
-
           <div>
             <p className="text-gray-500 text-xs font-semibold mb-2.5 uppercase tracking-wider">Urgency</p>
             <div className="flex gap-2">
@@ -375,14 +423,12 @@ function NewRequestModal({ onClose, onSubmit, submitting }) {
               ))}
             </div>
           </div>
-
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">Description</label>
             <textarea value={form.description} onChange={e => set('description', e.target.value)}
               placeholder="Describe what you need..." rows={3}
               className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-green-500/50 text-white placeholder-gray-600 rounded-xl px-4 py-3 outline-none transition-colors text-sm resize-none" />
           </div>
-
           <div>
             <label className="block text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wider">
               Why? <span className="text-gray-700 normal-case font-normal">(optional)</span>
@@ -391,7 +437,6 @@ function NewRequestModal({ onClose, onSubmit, submitting }) {
               placeholder="e.g. Broken leg, caring for parent..."
               className="w-full bg-white/[0.04] border border-white/[0.08] focus:border-green-500/50 text-white placeholder-gray-600 rounded-xl px-4 py-3 outline-none transition-colors text-sm" />
           </div>
-
           <div className="flex gap-3 pt-1">
             <button onClick={onClose} className="flex-1 glass border border-white/[0.08] text-gray-400 hover:text-white py-3 rounded-xl font-semibold text-sm transition-colors">Cancel</button>
             <button
@@ -435,9 +480,9 @@ function CancelConfirmModal({ request, onConfirm, onClose, loading }) {
   )
 }
 
-/* ════════════════════════════
+/* ═══════════════════════════════════
    MAIN DASHBOARD
-════════════════════════════ */
+═══════════════════════════════════ */
 export default function Dashboard({ session }) {
   const navigate = useNavigate()
   const [profile, setProfile] = useState(null)
@@ -461,6 +506,7 @@ export default function Dashboard({ session }) {
   const [detailsRequest, setDetailsRequest] = useState(null)
   const [cancelTarget, setCancelTarget] = useState(null)
   const [inviteCopied, setInviteCopied] = useState(false)
+  const [viewingUserId, setViewingUserId] = useState(null)
 
   // Action states
   const [acceptingId, setAcceptingId] = useState(null)
@@ -471,10 +517,12 @@ export default function Dashboard({ session }) {
   const userId = session.user.id
   const searchRef = useRef(null)
 
-  /* ── Queries – use explicit FK alias to avoid ambiguity ── */
+  // Use inner join aliases — works regardless of exact FK constraint name in Supabase
+  // requester_id always has a FK, helper_id is nullable but still has FK
   const SELECT_REQUEST = `
     *,
-    requester_profile:profiles!requests_requester_id_fkey(id, full_name, username, avatar_url, helps_completed)
+    requester_profile:profiles!requester_id(id, full_name, username, avatar_url, helps_completed),
+    helper_profile:profiles!helper_id(id, full_name, username, avatar_url, helps_completed)
   `
 
   const fetchProfile = useCallback(async () => {
@@ -538,7 +586,6 @@ export default function Dashboard({ session }) {
     setActiveMemberCount(count || 0)
   }, [])
 
-  /* ── Init ── */
   useEffect(() => {
     const init = async () => {
       setLoadingData(true)
@@ -558,7 +605,7 @@ export default function Dashboard({ session }) {
     fetchActiveMembers(profile.community)
   }, [profile, fetchMyRequests, fetchCommunity, fetchAccepted, fetchNotifications, fetchTodayCount, fetchActiveMembers])
 
-  /* ── Auto-expire ── */
+  // Auto-expire
   useEffect(() => {
     const expire = async () => {
       await supabase.from('requests').update({ status: 'cancelled' })
@@ -569,38 +616,40 @@ export default function Dashboard({ session }) {
     return () => clearInterval(id)
   }, [])
 
-  /* ── Realtime subscriptions ── */
+  // Realtime
   useEffect(() => {
     if (!profile) return
-
     const ch1 = supabase.channel('db-requests')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'requests' }, () => {
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'requests',
+      }, (payload) => {
+        // Re-fetch immediately when any request updates
+        // This covers: accepted, completed, cancelled transitions
         fetchMyRequests()
         fetchCommunity(profile.community)
         fetchAccepted()
         fetchTodayCount(profile.community)
-      }).subscribe()
-
-    const ch2 = supabase.channel('db-notifs')
+      })
       .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'notifications',
-        filter: `user_id=eq.${userId}`,
-      }, fetchNotifications).subscribe()
-
-    return () => {
-      supabase.removeChannel(ch1)
-      supabase.removeChannel(ch2)
-    }
+        event: 'INSERT', schema: 'public', table: 'requests',
+      }, () => {
+        fetchCommunity(profile.community)
+      })
+      .subscribe()
+    const ch2 = supabase.channel('db-notifs')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+        fetchNotifications).subscribe()
+    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2) }
   }, [profile, userId, fetchMyRequests, fetchCommunity, fetchAccepted, fetchNotifications, fetchTodayCount])
 
-  /* ── Keyboard shortcuts ── */
+  // Keyboard shortcuts
   useEffect(() => {
     const h = (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return
       if (e.key === 'n' || e.key === 'N') { setShowNewForm(true); return }
       if (e.key === 'Escape') {
         setShowNewForm(false); setShowNotifs(false); setShowChatList(false)
-        setChatRequest(null); setDetailsRequest(null); setCancelTarget(null)
+        setChatRequest(null); setDetailsRequest(null); setCancelTarget(null); setViewingUserId(null)
       }
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); searchRef.current?.focus() }
     }
@@ -608,7 +657,6 @@ export default function Dashboard({ session }) {
     return () => window.removeEventListener('keydown', h)
   }, [])
 
-  /* ── Filter ── */
   const filter = (reqs) => {
     if (!searchQuery.trim()) return reqs
     const q = searchQuery.toLowerCase()
@@ -658,8 +706,7 @@ export default function Dashboard({ session }) {
         message: `${profile.full_name} accepted your request: "${request.help_type}"`,
         is_read: false,
       })
-      fetchCommunity(profile.community)
-      fetchAccepted()
+      fetchCommunity(profile.community); fetchAccepted()
     } catch (e) { console.error('accept:', e) }
     finally { setAcceptingId(null) }
   }
@@ -673,7 +720,6 @@ export default function Dashboard({ session }) {
     setCompletingId(request.id)
     try {
       await supabase.from('requests').update({ status: 'completed' }).eq('id', request.id)
-      // Reliable increment with fallback
       const { error } = await incrementHelps(userId)
       if (error) console.error('incrementHelps error:', error)
       await fetchProfile()
@@ -700,7 +746,6 @@ export default function Dashboard({ session }) {
     navigate('/')
   }
 
-  /* ── Derived ── */
   const unread = notifications.filter(n => !n.is_read).length
   const filteredCommunity = filter(communityRequests)
   const filteredMine = filter(myRequests)
@@ -722,16 +767,12 @@ export default function Dashboard({ session }) {
       <Sidebar profile={profile} onProfileUpdate={setProfile} />
 
       <div className="flex-1 flex flex-col min-w-0">
-
-        {/* ── Top Navbar ── */}
+        {/* Navbar */}
         <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#0D0D0D]/80 backdrop-blur-xl px-4 py-3">
           <div className="flex items-center gap-3 max-w-5xl mx-auto">
-            {/* Mobile logo */}
             <div className="md:hidden w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center flex-shrink-0">
               <span className="text-black font-bold text-sm">H</span>
             </div>
-
-            {/* Search */}
             <div className="flex-1 max-w-sm relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 text-sm">🔍</span>
               <input ref={searchRef} type="text" value={searchQuery}
@@ -742,31 +783,21 @@ export default function Dashboard({ session }) {
                 <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-white text-xs">✕</button>
               )}
             </div>
-
             <div className="flex items-center gap-2 ml-auto">
-              {/* Chat */}
               <button onClick={() => { setShowChatList(v => !v); setShowNotifs(false) }}
                 className="relative w-9 h-9 rounded-xl glass border border-white/[0.08] hover:border-white/20 flex items-center justify-center transition-all hover:scale-105 active:scale-95">
                 <span className="text-base">💬</span>
                 {acceptedRequests.length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-                    {acceptedRequests.length}
-                  </span>
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center font-bold">{acceptedRequests.length}</span>
                 )}
               </button>
-
-              {/* Notifications */}
               <button onClick={() => { setShowNotifs(v => !v); setShowChatList(false) }}
                 className="relative w-9 h-9 rounded-xl glass border border-white/[0.08] hover:border-white/20 flex items-center justify-center transition-all hover:scale-105 active:scale-95">
                 <span className="text-base">🔔</span>
                 {unread > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">
-                    {unread > 9 ? '9+' : unread}
-                  </span>
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">{unread > 9 ? '9+' : unread}</span>
                 )}
               </button>
-
-              {/* Profile */}
               <Link to="/profile" className="hover:scale-105 transition-transform active:scale-95">
                 <Avatar profile={profile} size={36} />
               </Link>
@@ -774,7 +805,7 @@ export default function Dashboard({ session }) {
           </div>
         </header>
 
-        {/* ── Today banner ── */}
+        {/* Today banner */}
         {todayCount > 0 && (
           <div className="bg-gradient-to-r from-green-500/10 via-green-500/5 to-transparent border-b border-green-500/10 px-4 py-2">
             <p className="text-green-400 text-xs font-semibold text-center">
@@ -783,17 +814,12 @@ export default function Dashboard({ session }) {
           </div>
         )}
 
-        {/* ── Body ── */}
         <div className="flex-1 flex">
           <main className="flex-1 px-4 py-6 max-w-2xl mx-auto w-full pb-28 md:pb-8">
-
-            {/* Greeting */}
             <div className="mb-5">
               <h1 className="text-2xl font-extrabold text-white">
                 Hey, {profile?.full_name?.split(' ')[0] || 'there'} 👋
               </h1>
-
-              {/* Level + progress */}
               <div className="mt-2 flex items-center gap-3">
                 <span className={`text-sm font-semibold ${level.color}`}>{level.label}</span>
                 {level.next && (
@@ -808,10 +834,9 @@ export default function Dashboard({ session }) {
               </div>
             </div>
 
-            {/* Stats row */}
             <div className="flex gap-2 mb-5 flex-wrap">
               <div className="glass border border-white/[0.06] rounded-xl px-3 py-2 text-xs font-medium text-gray-400 flex items-center gap-1.5">
-                👥 <span className="text-white font-bold">{activeMemberCount}</span> active in {profile?.community}
+                👥 <span className="text-white font-bold">{activeMemberCount}</span> in {profile?.community}
               </div>
               <div className="glass border border-white/[0.06] rounded-xl px-3 py-2 text-xs font-medium text-gray-400 flex items-center gap-1.5">
                 ✅ <span className="text-green-400 font-bold">{profile?.helps_completed || 0}</span> helps
@@ -821,19 +846,11 @@ export default function Dashboard({ session }) {
             {/* Tabs */}
             <div className="flex gap-2 mb-5">
               <button onClick={() => setTab('need')}
-                className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
-                  tab === 'need'
-                    ? 'bg-red-500/20 text-red-400 border border-red-500/30'
-                    : 'glass text-gray-400 hover:text-white border border-white/[0.08]'
-                }`}>
+                className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${tab === 'need' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'glass text-gray-400 hover:text-white border border-white/[0.08]'}`}>
                 🆘 Need Help
               </button>
               <button onClick={() => setTab('help')}
-                className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${
-                  tab === 'help'
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                    : 'glass text-gray-400 hover:text-white border border-white/[0.08]'
-                }`}>
+                className={`flex-1 py-3 rounded-xl font-bold text-sm transition-all ${tab === 'help' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'glass text-gray-400 hover:text-white border border-white/[0.08]'}`}>
                 💚 Help Others
               </button>
             </div>
@@ -841,22 +858,16 @@ export default function Dashboard({ session }) {
             {/* ═══ NEED HELP ═══ */}
             {tab === 'need' && (
               <div className="space-y-4 animate-fade-in">
-                {/* New request button */}
                 <button onClick={() => setShowNewForm(true)}
                   className="w-full py-3.5 rounded-xl font-bold text-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 hover:border-red-500/40">
                   <span className="text-lg font-light">+</span> New Request
                   <span className="text-red-500/50 text-xs font-normal">(N)</span>
                 </button>
 
-                {/* My requests */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-gray-500 text-xs font-semibold uppercase tracking-wider">
-                      Your Requests
-                    </h3>
-                    {filteredMine.length > 0 && (
-                      <span className="text-gray-600 text-xs">{filteredMine.length}</span>
-                    )}
+                    <h3 className="text-gray-500 text-xs font-semibold uppercase tracking-wider">Your Requests</h3>
+                    {filteredMine.length > 0 && <span className="text-gray-600 text-xs">{filteredMine.length}</span>}
                   </div>
 
                   {filteredMine.length === 0 ? (
@@ -866,11 +877,55 @@ export default function Dashboard({ session }) {
                   ) : (
                     <div className="space-y-3">
                       {filteredMine.map(req => (
-                        <RequestCard key={req.id} request={req} isOwn
-                          onCancel={() => setCancelTarget(req)}
-                          onOpenDetails={setDetailsRequest}
-                          cancelling={cancelling && cancelTarget?.id === req.id}
-                        />
+                        <div key={req.id}>
+                          <RequestCard
+                            request={req} isOwn
+                            onCancel={() => setCancelTarget(req)}
+                            onOpenDetails={setDetailsRequest}
+                            onViewProfile={setViewingUserId}
+                            cancelling={cancelling && cancelTarget?.id === req.id}
+                          />
+                          {/* Show helper info + chat button when accepted */}
+                          {req.status === 'accepted' && (
+                            <div className="mt-1.5 mx-0.5 glass-card rounded-xl px-4 py-3 border border-green-500/15">
+                              {req.helper_profile ? (
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-green-400 text-xs font-semibold">Helped by:</span>
+                                    <button
+                                      onClick={() => setViewingUserId(req.helper_id)}
+                                      className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                                    >
+                                      <Avatar profile={req.helper_profile} size={24} />
+                                      <span className="text-white text-xs font-semibold">{req.helper_profile.full_name}</span>
+                                      {req.helper_profile.helps_completed > 5 && (
+                                        <span className="text-yellow-400 text-xs">⭐</span>
+                                      )}
+                                    </button>
+                                  </div>
+                                  <button
+                                    onClick={() => setChatRequest(req)}
+                                    className="flex items-center gap-1.5 bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/25 text-blue-400 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all active:scale-95"
+                                  >
+                                    💬 Chat
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-between gap-3">
+                                  <span className="text-green-400 text-xs font-semibold animate-pulse-soft">
+                                    ✅ Someone accepted your request!
+                                  </span>
+                                  <button
+                                    onClick={() => setChatRequest(req)}
+                                    className="flex items-center gap-1.5 bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/25 text-blue-400 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all active:scale-95"
+                                  >
+                                    💬 Chat
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   )}
@@ -881,12 +936,9 @@ export default function Dashboard({ session }) {
             {/* ═══ HELP OTHERS ═══ */}
             {tab === 'help' && (
               <div className="space-y-4 animate-fade-in">
-                {/* Currently helping */}
                 {acceptedRequests.length > 0 && (
                   <div>
-                    <h3 className="text-green-500/70 text-xs font-semibold uppercase tracking-wider mb-3">
-                      Currently Helping
-                    </h3>
+                    <h3 className="text-green-500/70 text-xs font-semibold uppercase tracking-wider mb-3">Currently Helping</h3>
                     <div className="space-y-3">
                       {acceptedRequests.map(req => (
                         <RequestCard key={req.id} request={req} isHelper
@@ -894,6 +946,7 @@ export default function Dashboard({ session }) {
                           onComplete={() => complete(req)}
                           onOpenChat={() => setChatRequest(req)}
                           onOpenDetails={setDetailsRequest}
+                          onViewProfile={setViewingUserId}
                           completing={completingId === req.id}
                         />
                       ))}
@@ -906,9 +959,7 @@ export default function Dashboard({ session }) {
                   <h3 className="text-gray-500 text-xs font-semibold uppercase tracking-wider">
                     Near You — {profile?.community}
                   </h3>
-                  {filteredCommunity.length > 0 && (
-                    <span className="text-gray-600 text-xs">{filteredCommunity.length} open</span>
-                  )}
+                  {filteredCommunity.length > 0 && <span className="text-gray-600 text-xs">{filteredCommunity.length} open</span>}
                 </div>
 
                 {loadingRequests ? (
@@ -923,6 +974,7 @@ export default function Dashboard({ session }) {
                       <RequestCard key={req.id} request={req}
                         onAccept={() => accept(req)}
                         onOpenDetails={setDetailsRequest}
+                        onViewProfile={setViewingUserId}
                         accepting={acceptingId === req.id}
                       />
                     ))}
@@ -935,24 +987,18 @@ export default function Dashboard({ session }) {
           {/* Right sidebar */}
           <aside className="hidden lg:block w-72 px-4 py-6 flex-shrink-0">
             <div className="sticky top-20 space-y-3">
-
-              {/* Community */}
               <div className="glass-green rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse-soft" />
                   <p className="text-green-500/70 text-xs font-semibold uppercase tracking-wider">Your Community</p>
                 </div>
                 <p className="text-white font-bold text-lg leading-tight mb-1">📍 {profile?.community || '—'}</p>
-                <p className="text-gray-500 text-xs">
-                  {communityRequests.length} open · {activeMemberCount} members
-                </p>
+                <p className="text-gray-500 text-xs">{communityRequests.length} open · {activeMemberCount} members</p>
               </div>
-
-              {/* Profile card */}
               <div className="glass-card rounded-2xl p-4">
                 <p className="text-gray-600 text-xs font-semibold uppercase tracking-wider mb-3">Profile</p>
                 <div className="flex items-center gap-3 mb-3">
-                  <Avatar profile={profile} size={44} />
+                  <Avatar profile={profile} size={44} onClick={() => navigate('/profile')} />
                   <div>
                     <p className="text-white font-bold text-sm">{profile?.full_name}</p>
                     <p className="text-gray-600 text-xs">@{profile?.username}</p>
@@ -972,8 +1018,6 @@ export default function Dashboard({ session }) {
                   )}
                 </div>
               </div>
-
-              {/* Invite */}
               <div className="glass-card rounded-2xl p-4">
                 <p className="text-gray-600 text-xs font-semibold uppercase tracking-wider mb-2">📨 Invite</p>
                 <p className="text-gray-500 text-xs mb-3">Share HelpNear with your neighbours.</p>
@@ -982,7 +1026,6 @@ export default function Dashboard({ session }) {
                   {inviteCopied ? '✓ Copied!' : '🔗 Copy Link'}
                 </button>
               </div>
-
               <button onClick={signOut} className="w-full text-gray-700 hover:text-red-500 text-xs font-medium transition-colors py-2">
                 Sign out
               </button>
@@ -990,15 +1033,14 @@ export default function Dashboard({ session }) {
           </aside>
         </div>
 
-        {/* ── Mobile bottom nav ── */}
+        {/* Mobile bottom nav */}
         <nav className="mobile-nav fixed bottom-0 left-0 right-0 z-40 border-t border-white/[0.07] bg-[#0D0D0D]/90 backdrop-blur-xl px-4 py-2 items-center justify-around">
           <button onClick={() => setTab('need')}
             className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-all ${tab==='need' ? 'text-red-400' : 'text-gray-600'}`}>
             <span className="text-xl">🆘</span>
             <span className="text-xs font-semibold">Need Help</span>
           </button>
-          <button onClick={() => setShowNewForm(true)}
-            className="flex flex-col items-center gap-0.5 px-4 py-1.5">
+          <button onClick={() => setShowNewForm(true)} className="flex flex-col items-center gap-0.5 px-4 py-1.5">
             <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center text-black text-2xl font-bold shadow-lg -mt-5 glow-green active:scale-95 transition-transform">+</div>
           </button>
           <button onClick={() => setTab('help')}
@@ -1006,8 +1048,7 @@ export default function Dashboard({ session }) {
             <span className="text-xl">💚</span>
             <span className="text-xs font-semibold">Help</span>
           </button>
-          <Link to="/profile"
-            className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-gray-600">
+          <Link to="/profile" className="flex flex-col items-center gap-0.5 px-4 py-1.5 text-gray-600">
             <span className="text-xl">👤</span>
             <span className="text-xs font-semibold">Profile</span>
           </Link>
@@ -1020,10 +1061,17 @@ export default function Dashboard({ session }) {
         </nav>
       </div>
 
-      {/* ── Modals ── */}
+      {/* Modals */}
       {showNotifs && <NotificationsModal notifications={notifications} onClose={() => setShowNotifs(false)} onMarkRead={markNotifsRead} />}
       {showChatList && <ChatListModal acceptedRequests={acceptedRequests} currentUserId={userId} onSelectChat={setChatRequest} onClose={() => setShowChatList(false)} />}
-      {chatRequest && <ChatModal request={chatRequest} currentUserId={userId} currentProfile={profile} onClose={() => setChatRequest(null)} />}
+      {chatRequest && (
+        <ChatModal
+          request={chatRequest}
+          currentUserId={userId}
+          onClose={() => setChatRequest(null)}
+          onViewProfile={(id) => { setViewingUserId(id); }}
+        />
+      )}
       {celebrating && <CelebrationModal onClose={() => setCelebrating(false)} helpsCount={profile?.helps_completed || 0} />}
       {showNewForm && <NewRequestModal onClose={() => setShowNewForm(false)} onSubmit={submitRequest} submitting={submitting} />}
       {detailsRequest && (
@@ -1039,6 +1087,9 @@ export default function Dashboard({ session }) {
       )}
       {cancelTarget && (
         <CancelConfirmModal request={cancelTarget} onConfirm={confirmCancel} onClose={() => setCancelTarget(null)} loading={cancelling} />
+      )}
+      {viewingUserId && (
+        <UserProfileModal userId={viewingUserId} onClose={() => setViewingUserId(null)} />
       )}
     </div>
   )
